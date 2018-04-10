@@ -291,6 +291,36 @@ public class JenkinsHttpClient implements JenkinsHttpConnection {
         }
     }
 
+    public void post_form2(String path, String value, boolean crumbFlag) throws IOException {
+        HttpPost request;
+        if (StringUtils.isNotBlank(value)) {
+            // https://gist.github.com/stuart-warren/7786892 was slightly
+            // helpful here
+            StringEntity stringEntity = new StringEntity(value, ContentType.APPLICATION_FORM_URLENCODED);
+            request = new HttpPost(UrlUtils.toNoApiUri(uri, context, path));
+            request.setEntity(stringEntity);
+        } else {
+            request = new HttpPost(UrlUtils.toNoApiUri(uri, context, path));
+        }
+
+        if (crumbFlag == true) {
+            Crumb crumb = get("/crumbIssuer", Crumb.class);
+            if (crumb != null) {
+                request.addHeader(new BasicHeader(crumb.getCrumbRequestField(), crumb.getCrumb()));
+            }
+        }
+
+        HttpResponse response = client.execute(request, localContext);
+        jenkinsVersion = ResponseUtils.getJenkinsVersion(response);
+
+        try {
+            httpResponseValidator.validateResponse(response);
+        } finally {
+            EntityUtils.consume(response.getEntity());
+            releaseConnection(request);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */

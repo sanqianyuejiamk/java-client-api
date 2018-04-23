@@ -313,6 +313,9 @@ public class JenkinsHttpClient implements JenkinsHttpConnection {
         HttpResponse response = client.execute(request, localContext);
         jenkinsVersion = ResponseUtils.getJenkinsVersion(response);
 
+        String responseBody = EntityUtils.toString(response.getEntity(), "utf-8");
+        LOGGER.info("Response("+response.getStatusLine().getStatusCode()+"): " + responseBody);
+
         try {
             httpResponseValidator.validateResponse(response);
         } finally {
